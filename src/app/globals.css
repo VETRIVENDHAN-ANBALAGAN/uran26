@@ -1,29 +1,49 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #020617;
+  --color-foreground: #f8fafc;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
 
 :root {
   --background: #020617; /* slate-950 */
   --foreground: #f8fafc; /* slate-50 */
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
 }
 
-@layer utilities {
-  .glass {
-    @apply bg-slate-900/40 backdrop-blur-md border border-slate-800/50;
-  }
-  .glass-card {
-    @apply bg-slate-900/60 backdrop-blur-lg border border-slate-700/50 shadow-xl;
-  }
+.parallax-layer {
+  will-change: transform;
+  transform-style: preserve-3d;
 }
 
-/* Custom scrollbar for a cleaner look */
+.glass {
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.glass-card {
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }

@@ -6,8 +6,20 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
-  title: "URAN 26 | Global Hackathon",
-  description: "Register for URAN 26, the premier global hackathon. Build the future.",
+  title: "URAN’26 | National-Level Inter-Collegiate Hackathon | 26 Sept 2026 | PMIST",
+  description:
+    "URAN’26 — 12-Hour National-Level Inter-Collegiate Hackathon (7:00 AM – 7:00 PM) on 26 September 2026 at PMIST Campus, Vallam, Thanjavur. Think • Build • Transform.",
+  keywords: [
+    "URAN 26",
+    "URAN'26",
+    "Hackathon PMIST",
+    "National Level Hackathon",
+    "Department of Computer Applications",
+    "Periyar Maniammai Institute of Science and Technology",
+    "Thanjavur Hackathon",
+    "Student Hackathon India",
+    "12 Hour Hackathon"
+  ],
 };
 
 export default function RootLayout({
