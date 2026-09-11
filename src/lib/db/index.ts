@@ -9,6 +9,7 @@ import {
   PaymentMode,
   PaymentReceipt
 } from "./types";
+import { getTeamsCollection, getAuditLogsCollection, isMongoConfigured } from "./mongodb";
 
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 // On Vercel, only /tmp is writable; locally, use persistent data directory
@@ -128,6 +129,24 @@ function loadDatabase(): void {
       auditLogsCache = [];
       isInitialized = true;
     }
+  }
+
+  // If MongoDB is configured, hydrate teams asynchronously from MongoDB
+  if (isMongoConfigured()) {
+    getTeamsCollection()
+      .then(async (col) => {
+        if (col) {
+          const mongoTeams = await col.find().sort({ createdAt: -1 }).toArray();
+          if (mongoTeams && mongoTeams.length > 0) {
+            teamsCache = mongoTeams.map((doc) => {
+              const { _id, ...rest } = doc as any;
+              return rest as TeamRegistration;
+            });
+            rebuildIndexes();
+          }
+        }
+      })
+      .catch((mongoErr) => console.warn("[MONGODB HYDRATE NOTICE]:", mongoErr));
   }
 }
 
@@ -267,6 +286,16 @@ export async function createTeamRegistration(
     });
 
     persistDatabaseSync();
+
+    // Direct MongoDB persistence
+    if (isMongoConfigured()) {
+      getTeamsCollection()
+        .then((col) => {
+          if (col) col.insertOne({ ...newRecord } as any);
+        })
+        .catch((mErr) => console.error("[MONGODB INSERT ERROR]:", mErr));
+    }
+
     return newRecord;
   });
 }
@@ -326,6 +355,28 @@ export async function checkInAndCollectPayment(
     });
 
     persistDatabaseSync();
+
+    // Direct MongoDB persistence for on-spot check-in & receipt
+    if (isMongoConfigured()) {
+      getTeamsCollection()
+        .then((col) => {
+          if (col) {
+            col.updateOne(
+              { registrationToken: cleanToken },
+              {
+                $set: {
+                  paymentStatus: team.paymentStatus,
+                  checkInStatus: team.checkInStatus,
+                  paymentReceipt: team.paymentReceipt,
+                  updatedAt: now,
+                },
+              }
+            );
+          }
+        })
+        .catch((mErr) => console.error("[MONGODB CHECKIN UPDATE ERROR]:", mErr));
+    }
+
     return team;
   });
 }
@@ -372,6 +423,15 @@ export async function updateTeamRegistration(
     });
 
     persistDatabaseSync();
+
+    if (isMongoConfigured()) {
+      getTeamsCollection()
+        .then((col) => {
+          if (col) col.updateOne({ registrationToken: cleanToken }, { $set: team as any });
+        })
+        .catch((mErr) => console.error("[MONGODB TEAM UPDATE ERROR]:", mErr));
+    }
+
     return team;
   });
 }
@@ -399,6 +459,15 @@ export async function disqualifyTeam(token: string, reason: string, adminUser: s
     });
 
     persistDatabaseSync();
+
+    if (isMongoConfigured()) {
+      getTeamsCollection()
+        .then((col) => {
+          if (col) col.updateOne({ registrationToken: cleanToken }, { $set: { checkInStatus: "DISQUALIFIED", updatedAt: team.updatedAt } });
+        })
+        .catch((mErr) => console.error("[MONGODB DISQUALIFY ERROR]:", mErr));
+    }
+
     return team;
   });
 }
@@ -520,6 +589,14 @@ export async function recordAuditLog(
   }
 
   persistDatabaseSync();
+
+  if (isMongoConfigured()) {
+    getAuditLogsCollection()
+      .then((col) => {
+        if (col) col.insertOne({ ...auditLogsCache[0] } as any);
+      })
+      .catch((mErr) => console.error("[MONGODB AUDIT LOG ERROR]:", mErr));
+  }
 }
 
 export async function getAuditLogs(limit = 100): Promise<AuditLogRecord[]> {

@@ -20,6 +20,15 @@ export const metadata: Metadata = {
     "Student Hackathon India",
     "12 Hour Hackathon"
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png" },
+    ],
+  },
 };
 
 export default function RootLayout({

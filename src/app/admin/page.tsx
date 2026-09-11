@@ -27,13 +27,19 @@ import {
   Layers,
   Award,
   Wallet,
+  Lock,
+  User,
+  EyeOff,
 } from "lucide-react";
 import { TeamRegistration, AdminStats, AuditLogRecord } from "@/lib/db/types";
 
 export default function AdminDashboardPage() {
   const [adminKey, setAdminKey] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [inputKey, setInputKey] = useState<string>("");
+  const [loginId, setLoginId] = useState<string>("admin");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [adminUsername, setAdminUsername] = useState<string>("");
   const [authError, setAuthError] = useState<string>("");
 
   // Dashboard Data State
@@ -64,8 +70,10 @@ export default function AdminDashboardPage() {
   // Check saved admin key on mount
   useEffect(() => {
     const saved = sessionStorage.getItem("uran26_admin_key");
+    const savedUser = sessionStorage.getItem("uran26_admin_username");
     if (saved) {
       setAdminKey(saved);
+      if (savedUser) setAdminUsername(savedUser);
       validateAndLoadData(saved);
     }
   }, []);
@@ -80,7 +88,7 @@ export default function AdminDashboardPage() {
       ]);
 
       if (statsRes.status === 401 || teamsRes.status === 401) {
-        throw new Error("Invalid Organizer Passcode. Access denied.");
+        throw new Error("Invalid or expired session. Please log in again.");
       }
 
       const statsData = await statsRes.json();
@@ -102,16 +110,51 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputKey.trim()) return;
-    setAdminKey(inputKey.trim());
-    validateAndLoadData(inputKey.trim());
+    if (!loginId.trim() || !password) {
+      setAuthError("Please enter both Login ID and Password.");
+      return;
+    }
+    setIsLoading(true);
+    setAuthError("");
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: loginId.trim(),
+          password,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Login failed. Check your Login ID and Password.");
+      }
+
+      setAdminKey(data.token);
+      setAdminUsername(data.user?.username || loginId.trim());
+      sessionStorage.setItem("uran26_admin_key", data.token);
+      sessionStorage.setItem("uran26_admin_username", data.user?.username || loginId.trim());
+      await validateAndLoadData(data.token);
+    } catch (err: any) {
+      setAuthError(err.message || "Failed to authenticate.");
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {}
     sessionStorage.removeItem("uran26_admin_key");
+    sessionStorage.removeItem("uran26_admin_username");
     setAdminKey("");
+    setAdminUsername("");
     setIsAuthenticated(false);
     setStats(null);
     setTeams([]);
@@ -239,24 +282,48 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono text-slate-300 uppercase tracking-wider mb-2">
-                  Organizer Access Passcode
+                  Admin Login ID / Username
                 </label>
                 <div className="relative">
-                  <KeyRound className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="password"
-                    value={inputKey}
-                    onChange={(e) => setInputKey(e.target.value)}
-                    placeholder="Enter PMIST organizer key..."
-                    className="w-full bg-[#060c18] border border-slate-700/80 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono placeholder:text-slate-600"
+                    type="text"
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    placeholder="Enter login ID (e.g. admin)..."
+                    className="w-full bg-[#060c18] border border-slate-700/80 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono placeholder:text-slate-600"
                     autoFocus
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-slate-300 uppercase tracking-wider mb-2">
+                  Admin Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter admin password..."
+                    className="w-full bg-[#060c18] border border-slate-700/80 rounded-xl py-3 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors font-mono placeholder:text-slate-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <div className="mt-2 text-[11px] text-slate-500">
-                  Default dev key: <code className="text-sky-400 font-mono">uran26_pmist_organizer_secret_key</code>
+                  Default credentials: <code className="text-sky-400 font-mono">admin</code> / <code className="text-sky-400 font-mono">uran26@admin</code>
                 </div>
               </div>
 
@@ -270,7 +337,7 @@ export default function AdminDashboardPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 px-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer mt-2"
               >
                 {isLoading ? (
                   <>
@@ -279,7 +346,7 @@ export default function AdminDashboardPage() {
                   </>
                 ) : (
                   <>
-                    Access Console
+                    Sign In to Console
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -319,6 +386,11 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300 font-mono">
+              <User className="w-3.5 h-3.5 text-sky-400" />
+              <span>{adminUsername || "admin"}</span>
+            </span>
+
             <button
               onClick={refreshData}
               disabled={isLoading}
