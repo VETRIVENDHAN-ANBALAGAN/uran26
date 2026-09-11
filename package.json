@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "clean:dev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "clean:start": "lsof -ti:3000 | xargs kill -9 2>/dev/null; next start",
+    "lint": "eslint",
+    "test:db": "node scripts/test-connection.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
