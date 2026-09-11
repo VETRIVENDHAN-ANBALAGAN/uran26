@@ -171,8 +171,8 @@ export function Schedule() {
                       : "glass-card border-slate-800/80 hover:border-slate-700"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs sm:text-sm font-black text-slate-200 shrink-0 min-w-[155px]">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="font-mono text-xs sm:text-sm font-black text-slate-200 shrink-0 sm:min-w-[155px]">
                       {item.time}
                     </span>
                     <span className={cn("px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border font-mono shrink-0", item.tagColor)}>

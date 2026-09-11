@@ -454,11 +454,11 @@ export default function AdminDashboardPage() {
 
         {/* Telemetry Metric Cards */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Total Teams */}
-            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
               <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Pre-Registered Teams</div>
-              <div className="text-3xl font-black text-white">{stats.totalTeams}</div>
+              <div className="text-2xl sm:text-3xl font-black text-white">{stats.totalTeams}</div>
               <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
                 <Users className="w-3.5 h-3.5 text-sky-400" />
                 <span>{stats.totalParticipants} total builders</span>
@@ -467,9 +467,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Check-In Progress */}
-            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
               <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Physical Check-Ins</div>
-              <div className="text-3xl font-black text-emerald-400">
+              <div className="text-2xl sm:text-3xl font-black text-emerald-400">
                 {stats.checkedInTeams} <span className="text-sm font-semibold text-slate-400">/ {stats.totalTeams}</span>
               </div>
               <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
@@ -479,9 +479,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Fees Collected On-Spot */}
-            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
               <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Revenue Collected</div>
-              <div className="text-3xl font-black text-amber-400">₹{stats.totalRevenueCollected.toLocaleString()}</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-400">₹{stats.totalRevenueCollected.toLocaleString()}</div>
               <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
                 <Wallet className="w-3.5 h-3.5 text-amber-400" />
                 <span>₹{stats.totalRevenueProjected.toLocaleString()} projected</span>
@@ -489,9 +489,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Accommodation Requests */}
-            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
               <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Accommodation (25th)</div>
-              <div className="text-3xl font-black text-indigo-400">{stats.accommodationRequestsCount}</div>
+              <div className="text-2xl sm:text-3xl font-black text-indigo-400">{stats.accommodationRequestsCount}</div>
               <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
                 <BedDouble className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Night stay requested</span>
@@ -499,9 +499,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Pending Desk Check-ins */}
-            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-5 relative overflow-hidden col-span-2 md:col-span-1">
+            <div className="bg-[#0b1222] border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden sm:col-span-2 lg:col-span-1">
               <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Pending Check-Ins</div>
-              <div className="text-3xl font-black text-slate-300">{stats.pendingCheckIns}</div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-300">{stats.pendingCheckIns}</div>
               <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>Yet to report at PMIST</span>
@@ -634,9 +634,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
               {/* Search */}
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"

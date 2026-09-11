@@ -426,20 +426,21 @@ export function SpecialRegistrationTerminal() {
                       <label className="text-xs font-semibold text-slate-300">Squad Size (3–5 Members) *</label>
                       <span className="text-[10px] text-amber-300 font-mono">₹250 / participant</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                       {memberCountOptions.map((count) => (
                         <button
                           key={count}
                           type="button"
                           onClick={() => handleInputChange("teamSize", count)}
                           className={cn(
-                            "flex-1 py-2 rounded-xl text-xs font-bold border transition-all",
+                            "py-2 px-1 rounded-xl text-center font-bold border transition-all text-[11px] sm:text-xs",
                             formData.teamSize === count
                               ? "bg-white text-slate-950 border-white shadow"
                               : "bg-[#060c18] border-slate-800 text-slate-400 hover:text-white"
                           )}
                         >
-                          {count} Members (₹{count * 250})
+                          <span className="block sm:inline">{count} {count === 1 ? "Person" : "Members"}</span>
+                          <span className="block sm:inline sm:ml-1 text-[10px] sm:text-xs opacity-80">(₹{count * 250})</span>
                         </button>
                       ))}
                     </div>

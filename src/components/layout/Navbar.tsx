@@ -78,7 +78,7 @@ export function Navbar() {
                   12H Single-Day
                 </span>
               </div>
-              <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium tracking-wide">
+              <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium tracking-wide hidden sm:block">
                 26 Sept 2026 • 7 AM – 7 PM • PMIST
               </span>
             </div>
@@ -104,7 +104,7 @@ export function Navbar() {
           </div>
 
           {/* Action Trigger & Urgency Indicators */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Payment & Venue Badge */}
             <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 font-mono">
               <span className="relative flex h-2 w-2">
@@ -117,11 +117,11 @@ export function Navbar() {
             {/* High-Impact Register CTA */}
             <Link
               href="/#register"
-              className="relative group overflow-hidden px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs sm:text-sm hover:bg-sky-100 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.4)] flex items-center gap-2"
+              className="relative group overflow-hidden px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs sm:text-sm hover:bg-sky-100 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.4)] flex items-center gap-1.5 sm:gap-2"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:rotate-12 transition-transform" />
               <span>Pre-Register</span>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-950 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 text-slate-950 group-hover:translate-x-1 transition-transform hidden xs:inline-block" />
             </Link>
 
             {/* Mobile Menu Toggle Button */}
