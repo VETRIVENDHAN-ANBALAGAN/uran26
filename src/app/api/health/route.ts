@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminStats } from "@/lib/db";
+import { checkMongoConnection } from "@/lib/db/mongodb";
 
 export const dynamic = "force-dynamic";
 
@@ -7,11 +8,14 @@ const START_TIME = Date.now();
 
 export async function GET() {
   try {
-    const stats = await getAdminStats();
+    const [stats, mongoStatus] = await Promise.all([
+      getAdminStats(),
+      checkMongoConnection(),
+    ]);
     const memory = process.memoryUsage();
 
     return NextResponse.json({
-      status: "healthy",
+      status: mongoStatus.isConnected || stats.totalTeams >= 0 ? "healthy" : "degraded",
       service: "URAN’26 Hackathon Core Backend",
       version: "1.0.0",
       timestamp: new Date().toISOString(),
@@ -27,9 +31,19 @@ export async function GET() {
         },
       },
       engine: {
-        database: "ATOMIC_FILE_SYSTEM_PERSISTENCE",
+        database: mongoStatus.isConnected ? "MONGODB_ATLAS_PRIMARY" : "ATOMIC_FILE_SYSTEM_PERSISTENCE_FALLBACK",
         rateLimiter: "SLIDING_WINDOW_IN_MEMORY",
         paymentModel: "ON_SPOT_AT_PMIST_CHECKIN",
+      },
+      databaseConnection: {
+        provider: "MongoDB Atlas",
+        isConfigured: mongoStatus.isConfigured,
+        isConnected: mongoStatus.isConnected,
+        databaseName: mongoStatus.database,
+        pingMs: mongoStatus.pingMs,
+        collectionsFound: mongoStatus.collections,
+        errorMessage: mongoStatus.error || null,
+        localFileCacheActive: true,
       },
     });
   } catch (err: any) {

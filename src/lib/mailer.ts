@@ -17,6 +17,22 @@ export interface InvoiceEmailPayload {
   paidAt: string;
 }
 
+import { generateQrDataUrl, getVerificationUrl } from "./qrcode";
+
+function isSmtpConfigured(): boolean {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  return Boolean(
+    host &&
+      user &&
+      pass &&
+      !pass.includes("your_gmail") &&
+      !pass.includes("<") &&
+      pass.trim().length > 5
+  );
+}
+
 // Production-ready resilient email service
 export async function sendRegistrationTaxInvoiceEmail(payload: InvoiceEmailPayload): Promise<{ success: boolean; simulated?: boolean; messageId?: string; error?: string }> {
   try {
@@ -27,9 +43,9 @@ export async function sendRegistrationTaxInvoiceEmail(payload: InvoiceEmailPaylo
     const from = process.env.SMTP_FROM || `"URAN 26 Hackathon" <registrations@uran26.edu>`;
 
     // If SMTP is not yet configured, log the formatted receipt and return simulated success
-    if (!host || !user || !pass) {
+    if (!isSmtpConfigured()) {
       console.log(`\n======================================================`);
-      console.log(`[MAILER SIMULATION] SMTP credentials not set in .env.local`);
+      console.log(`[MAILER SIMULATION] SMTP credentials not set or placeholder in .env.local`);
       console.log(`[RECEIPT DISPATCH] Sending Tax Invoice to: ${payload.to}`);
       console.log(`[ORDER] ${payload.orderId} | [PAYMENT] ${payload.paymentId} | [UTR] ${payload.utr}`);
       console.log(`[INVOICE] ${payload.invoiceNo} | Amount: ₹${payload.amount} (${payload.teamSize} builders @ ₹${payload.perPerson}/person)`);
@@ -173,11 +189,15 @@ export async function sendPreRegistrationConfirmationEmail(payload: PreRegistrat
     const pass = process.env.SMTP_PASS;
     const from = process.env.SMTP_FROM || `"URAN’26 Hackathon" <join.uran26@gmail.com>`;
 
-    if (!host || !user || !pass) {
+    const verifyUrl = getVerificationUrl(payload.registrationToken);
+    const qrDataUrl = await generateQrDataUrl(verifyUrl, { width: 320 });
+
+    if (!isSmtpConfigured()) {
       console.log(`\n======================================================`);
       console.log(`[MAILER SIMULATION] Pre-Registration Pass Generated`);
       console.log(`[PASS DISPATCH] Sent to: ${payload.to}`);
       console.log(`[TEAM] ${payload.teamName} (Lead: ${payload.leaderName}) | Token: ${payload.registrationToken}`);
+      console.log(`[VERIFY URL] ${verifyUrl}`);
       console.log(`[PAYMENT DUE ON-SPOT] ₹${payload.totalPayableOnSpot} (${payload.teamSize} builders @ ₹${payload.perPerson}/person)`);
       console.log(`[ACCOMMODATION] ${payload.accommodationRequested ? "Requested (Subject to availability & additional payment on-spot)" : "Not Requested"}`);
       console.log(`======================================================\n`);
@@ -245,6 +265,19 @@ export async function sendPreRegistrationConfirmationEmail(payload: PreRegistrat
         <div style="font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 2px; margin: 6px 0;">${payload.registrationToken}</div>
         <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
           Your Team Code is required for on-site verification. <strong>All team members must be present with their valid Student IDs.</strong>
+        </div>
+
+        ${qrDataUrl ? `
+        <div style="margin-top: 16px; padding: 12px; background: #ffffff; border-radius: 12px; display: inline-block;">
+          <img src="${qrDataUrl}" width="160" height="160" alt="Verification QR Code" style="display: block; margin: 0 auto;" />
+          <div style="font-size: 10px; color: #020617; font-family: monospace; font-weight: bold; margin-top: 6px;">SCAN TO VERIFY CREDENTIALS</div>
+        </div>
+        ` : ""}
+
+        <div style="margin-top: 14px;">
+          <a href="${verifyUrl}" style="display: inline-block; background-color: #0284c7; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: bold; padding: 8px 18px; border-radius: 8px;">
+            Open & Print Official Delegate Badge ↗
+          </a>
         </div>
       </div>
 

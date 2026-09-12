@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     // Robust validation
     if (!teamName || !leaderName || !leaderEmail || !teamSize) {
       return NextResponse.json(
-        { success: false, error: "Missing required registration parameters (teamName, leaderName, leaderEmail, teamSize)" },
+        { success: false, error: "Missing required registration details (teamName, leaderName, leaderEmail, teamSize)" },
         { status: 400 }
       );
     }

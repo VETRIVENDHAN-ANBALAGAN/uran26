@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { 
   Check, Terminal, ShieldCheck, 
   Sparkles, QrCode, Copy, CheckCheck, 
   ArrowRight, Printer, AlertCircle, BedDouble, 
   Users, Building2, Phone, Mail, CheckCircle2,
-  Calendar, MapPin, Clock, Info, ShieldAlert
+  Calendar, MapPin, Clock, Info, ShieldAlert,
+  ExternalLink, Download
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { DelegateBadgeModal } from "./DelegateBadge";
+import { generateQrDataUrl, getVerificationUrl } from "@/lib/qrcode";
 
 const preferredTrackOptions = [
   "01 — EdTech & Inclusive Innovation",
@@ -36,6 +40,12 @@ export interface RegistrationPassData {
   preferredTrack: string;
   accommodationRequested: boolean;
   registeredAt: string;
+  members?: Array<{
+    name: string;
+    role?: string;
+    email?: string;
+    phone?: string;
+  }>;
 }
 
 export function SpecialRegistrationTerminal() {
@@ -45,6 +55,16 @@ export function SpecialRegistrationTerminal() {
   const [registrationData, setRegistrationData] = useState<RegistrationPassData | null>(null);
   const [copiedToken, setCopiedToken] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
+  const [previewQrDataUrl, setPreviewQrDataUrl] = useState("");
+
+  useEffect(() => {
+    const token = registrationData?.registrationToken || "URAN26-TEAM-PREVIEW";
+    const url = getVerificationUrl(token);
+    generateQrDataUrl(url, { width: 300, margin: 1 }).then((data) => {
+      setPreviewQrDataUrl(data);
+    });
+  }, [registrationData?.registrationToken]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -324,22 +344,46 @@ export function SpecialRegistrationTerminal() {
                   <p>4. Collect official delegate badges and proceed to assigned computing lab workstation.</p>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-                  <button
-                    onClick={handlePrint}
-                    className="px-6 py-3 rounded-full bg-white hover:bg-slate-200 text-slate-950 text-xs sm:text-sm font-bold transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Printer className="w-4 h-4" />
-                    <span>Print Pre-Registration Pass</span>
-                  </button>
-                  <a
-                    href="#schedule"
-                    className="px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 border border-slate-700"
-                  >
-                    <span>View 12h Schedule</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
+                {/* Action Buttons: Badges, Print, Download, Verify */}
+                <div className="space-y-3 max-w-lg mx-auto">
+                  <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsBadgeModalOpen(true)}
+                      className="px-6 py-3.5 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs sm:text-sm font-black transition-all shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-sky-200" />
+                      <span>Print / Download Delegate Badges (PNG)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handlePrint}
+                      className="px-5 py-3.5 rounded-full bg-white hover:bg-slate-200 text-slate-950 text-xs sm:text-sm font-black transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>Print A4 Pass</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                    <Link
+                      href={`/verify/${encodeURIComponent(registrationData.registrationToken)}`}
+                      target="_blank"
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Test QR Verification Live ↗</span>
+                    </Link>
+
+                    <a
+                      href="#schedule"
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>12h Schedule</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
 
                 <div className="mt-6 text-[11px] text-slate-400">
@@ -663,14 +707,26 @@ export function SpecialRegistrationTerminal() {
                     </div>
                   </div>
 
-                  {/* Footer Barcode & Verification */}
+                  {/* Footer Barcode & Real Scannable Verification QR */}
                   <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
                     <div className="font-mono text-[9px] text-slate-500 space-y-0.5">
                       <div>VENUE: PMIST_THANJAVUR</div>
-                      <div>STATUS: {isSuccess ? "PRE_REGISTERED_CONFIRMED" : "PRE_REGISTRATION_DRAFT"}</div>
+                      <div className={isSuccess ? "text-emerald-400 font-bold" : "text-amber-400"}>
+                        STATUS: {isSuccess ? "VERIFIED_CONFIRMED" : "PRE_REGISTRATION_DRAFT"}
+                      </div>
+                      <div className="text-[8px] text-sky-400">SCAN TO VERIFY PMIST ACCREDITATION</div>
                     </div>
-                    <div className="p-1.5 bg-white rounded-lg">
-                      <QrCode className="w-7 h-7 text-slate-950" />
+                    <div className="p-1 bg-white rounded-lg shadow-md flex-shrink-0">
+                      {previewQrDataUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={previewQrDataUrl}
+                          alt="Real QR Code"
+                          className="w-10 h-10 object-contain rounded"
+                        />
+                      ) : (
+                        <QrCode className="w-8 h-8 text-slate-950" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -688,6 +744,15 @@ export function SpecialRegistrationTerminal() {
         </div>
 
       </div>
+
+      {/* Delegate Badge Modal */}
+      {registrationData && (
+        <DelegateBadgeModal
+          isOpen={isBadgeModalOpen}
+          onClose={() => setIsBadgeModalOpen(false)}
+          registration={registrationData}
+        />
+      )}
     </section>
   );
 }

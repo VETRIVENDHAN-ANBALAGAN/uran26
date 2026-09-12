@@ -30,8 +30,10 @@ import {
   Lock,
   User,
   EyeOff,
+  Printer,
 } from "lucide-react";
 import { TeamRegistration, AdminStats, AuditLogRecord } from "@/lib/db/types";
+import { DelegateBadgeModal } from "@/components/registration/DelegateBadge";
 
 export default function AdminDashboardPage() {
   const [adminKey, setAdminKey] = useState<string>("");
@@ -41,6 +43,7 @@ export default function AdminDashboardPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [adminUsername, setAdminUsername] = useState<string>("");
   const [authError, setAuthError] = useState<string>("");
+  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState<boolean>(false);
 
   // Dashboard Data State
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -882,7 +885,15 @@ export default function AdminDashboardPage() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+            <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsBadgeModalOpen(true)}
+                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Delegate Badges & QR</span>
+              </button>
               <button
                 onClick={() => setSelectedTeam(null)}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
@@ -1030,6 +1041,15 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Delegate Badge Modal for Organizer Desk */}
+      {selectedTeam && (
+        <DelegateBadgeModal
+          isOpen={isBadgeModalOpen}
+          onClose={() => setIsBadgeModalOpen(false)}
+          registration={selectedTeam}
+        />
       )}
     </div>
   );

@@ -131,18 +131,35 @@ function loadDatabase(): void {
     }
   }
 
-  // If MongoDB is configured, hydrate teams asynchronously from MongoDB
+  // If MongoDB is configured, hydrate and bi-directionally sync teams
   if (isMongoConfigured()) {
     getTeamsCollection()
       .then(async (col) => {
         if (col) {
           const mongoTeams = await col.find().sort({ createdAt: -1 }).toArray();
           if (mongoTeams && mongoTeams.length > 0) {
-            teamsCache = mongoTeams.map((doc) => {
+            const existingTokens = new Set(mongoTeams.map((t) => (t as any).registrationToken));
+            const missingInMongo = teamsCache.filter((t) => !existingTokens.has(t.registrationToken));
+            
+            if (missingInMongo.length > 0) {
+              await col.insertMany(missingInMongo as any[]).catch((e) =>
+                console.warn("[MONGODB SYNC NOTICE]:", e.message)
+              );
+            }
+
+            const cleanMongoTeams = mongoTeams.map((doc) => {
               const { _id, ...rest } = doc as any;
               return rest as TeamRegistration;
             });
+
+            teamsCache = [...cleanMongoTeams, ...missingInMongo];
             rebuildIndexes();
+            persistDatabaseSync();
+          } else if (teamsCache.length > 0) {
+            // Seed MongoDB from local cache if MongoDB collection was empty
+            await col.insertMany(teamsCache as any[]).catch((e) =>
+              console.warn("[MONGODB SEED NOTICE]:", e.message)
+            );
           }
         }
       })
@@ -289,11 +306,14 @@ export async function createTeamRegistration(
 
     // Direct MongoDB persistence
     if (isMongoConfigured()) {
-      getTeamsCollection()
-        .then((col) => {
-          if (col) col.insertOne({ ...newRecord } as any);
-        })
-        .catch((mErr) => console.error("[MONGODB INSERT ERROR]:", mErr));
+      try {
+        const col = await getTeamsCollection();
+        if (col) {
+          await col.insertOne({ ...newRecord } as any);
+        }
+      } catch (mErr) {
+        console.error("[MONGODB INSERT ERROR]:", mErr);
+      }
     }
 
     return newRecord;
@@ -358,23 +378,24 @@ export async function checkInAndCollectPayment(
 
     // Direct MongoDB persistence for on-spot check-in & receipt
     if (isMongoConfigured()) {
-      getTeamsCollection()
-        .then((col) => {
-          if (col) {
-            col.updateOne(
-              { registrationToken: cleanToken },
-              {
-                $set: {
-                  paymentStatus: team.paymentStatus,
-                  checkInStatus: team.checkInStatus,
-                  paymentReceipt: team.paymentReceipt,
-                  updatedAt: now,
-                },
-              }
-            );
-          }
-        })
-        .catch((mErr) => console.error("[MONGODB CHECKIN UPDATE ERROR]:", mErr));
+      try {
+        const col = await getTeamsCollection();
+        if (col) {
+          await col.updateOne(
+            { registrationToken: cleanToken },
+            {
+              $set: {
+                paymentStatus: team.paymentStatus,
+                checkInStatus: team.checkInStatus,
+                paymentReceipt: team.paymentReceipt,
+                updatedAt: now,
+              },
+            }
+          );
+        }
+      } catch (mErr) {
+        console.error("[MONGODB CHECKIN UPDATE ERROR]:", mErr);
+      }
     }
 
     return team;
@@ -425,11 +446,14 @@ export async function updateTeamRegistration(
     persistDatabaseSync();
 
     if (isMongoConfigured()) {
-      getTeamsCollection()
-        .then((col) => {
-          if (col) col.updateOne({ registrationToken: cleanToken }, { $set: team as any });
-        })
-        .catch((mErr) => console.error("[MONGODB TEAM UPDATE ERROR]:", mErr));
+      try {
+        const col = await getTeamsCollection();
+        if (col) {
+          await col.updateOne({ registrationToken: cleanToken }, { $set: team as any });
+        }
+      } catch (mErr) {
+        console.error("[MONGODB TEAM UPDATE ERROR]:", mErr);
+      }
     }
 
     return team;
@@ -461,11 +485,14 @@ export async function disqualifyTeam(token: string, reason: string, adminUser: s
     persistDatabaseSync();
 
     if (isMongoConfigured()) {
-      getTeamsCollection()
-        .then((col) => {
-          if (col) col.updateOne({ registrationToken: cleanToken }, { $set: { checkInStatus: "DISQUALIFIED", updatedAt: team.updatedAt } });
-        })
-        .catch((mErr) => console.error("[MONGODB DISQUALIFY ERROR]:", mErr));
+      try {
+        const col = await getTeamsCollection();
+        if (col) {
+          await col.updateOne({ registrationToken: cleanToken }, { $set: { checkInStatus: "DISQUALIFIED", updatedAt: team.updatedAt } });
+        }
+      } catch (mErr) {
+        console.error("[MONGODB DISQUALIFY ERROR]:", mErr);
+      }
     }
 
     return team;
@@ -591,11 +618,14 @@ export async function recordAuditLog(
   persistDatabaseSync();
 
   if (isMongoConfigured()) {
-    getAuditLogsCollection()
-      .then((col) => {
-        if (col) col.insertOne({ ...auditLogsCache[0] } as any);
-      })
-      .catch((mErr) => console.error("[MONGODB AUDIT LOG ERROR]:", mErr));
+    try {
+      const col = await getAuditLogsCollection();
+      if (col) {
+        await col.insertOne({ ...auditLogsCache[0] } as any);
+      }
+    } catch (mErr) {
+      console.error("[MONGODB AUDIT LOG ERROR]:", mErr);
+    }
   }
 }
 

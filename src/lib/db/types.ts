@@ -71,6 +71,8 @@ export interface AdminStats {
   accommodationRequestsCount: number;
   trackDistribution: Record<string, number>;
   lastRegistrationAt: string | null;
+  dbConnected?: boolean;
+  dbMode?: string;
 }
 
 export interface DatabaseSchema {

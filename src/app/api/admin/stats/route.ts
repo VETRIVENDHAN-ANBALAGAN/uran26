@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/security/admin-auth";
 import { getAdminStats } from "@/lib/db";
 
+import { checkMongoConnection } from "@/lib/db/mongodb";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -13,7 +15,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    const stats = await getAdminStats();
+    const [stats, mongoStatus] = await Promise.all([
+      getAdminStats(),
+      checkMongoConnection(),
+    ]);
+
+    stats.dbConnected = mongoStatus.isConnected;
+    stats.dbMode = mongoStatus.isConnected ? "MONGODB_ATLAS" : "LOCAL_FILE_SYSTEM";
+
     return NextResponse.json({
       success: true,
       stats,
