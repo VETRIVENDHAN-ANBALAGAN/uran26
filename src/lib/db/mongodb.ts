@@ -21,7 +21,7 @@ declare global {
 }
 
 export function isMongoConfigured(): boolean {
-  return Boolean(uri && uri.trim().startsWith("mongodb"));
+  return Boolean(uri && uri.trim().startsWith("mongodb") && !uri.includes("<db_password>"));
 }
 
 if (isMongoConfigured() && uri) {
